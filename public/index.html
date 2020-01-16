@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,7 @@
 	<meta name="apple-mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="blue">
 	<meta name="apple-mobile-web-app-title" content="Chatterbox">
-	
+
 	<link rel="apple-touch-icon" href="/assets/images/catter-152x152.png">
 
 	<meta name="description" content="A simple chat app with no login">
@@ -16,13 +17,14 @@
 	<meta name="theme-color" content="#ADD8E6">
 
 	<title>Chatterbox</title>
-	
+
 	<link rel="shortcut icon" href="/assets/images/catter-128x128.png" type="image/png">
 	<link rel="stylesheet" href="/assets/css/style.css">
 	<link rel="manifest" href="/manifest.json">
 </head>
+
 <body>
-	
+
 	<nav>
 		<a href="/" class="siteBrand">
 			<img src="/assets/images/catter.svg" alt="Chatterbox logo" class="siteBrand__logo">
@@ -56,7 +58,7 @@
 		var username = document.getElementsByClassName("chatMessage__username")[0];
 		var user;
 
-		joinForm.addEventListener("submit", function(e) {
+		joinForm.addEventListener("submit", function (e) {
 			e.preventDefault();
 			if (username.value == "") {
 				return;
@@ -69,7 +71,7 @@
 			chatForm.classList.remove("hidden");
 		});
 
-		chatForm.addEventListener("submit", function(e) {
+		chatForm.addEventListener("submit", function (e) {
 			e.preventDefault();
 			if (chatInput.value == "") {
 				return;
@@ -84,7 +86,7 @@
 			let time = Date.now();
 
 			socket.send({ msg: chatInput.value, timestamp: time, username: user });
-			
+
 			let p = document.createElement("p");
 			p.className = "mainChatView__me";
 			p.innerHTML = chatInput.value;
@@ -100,18 +102,22 @@
 			chatInput.value = "";
 		});
 
-		socket.on("message", function(msg) {
+		socket.on("userjoin", function (msg) {
 			console.log(msg);
+
+			if (document.visibilityState == "hidden"	) {
+				displayNotification(`${msg} has joined the chat`);
+			}
 
 			let p = document.createElement("p");
 			p.className = "mainChatView__other";
-			
+
 			let span = document.createElement("span");
 			span.className = "mainChatView__name";
 			span.innerText = msg.username;
 
 			p.appendChild(span);
-			
+
 			p.innerHTML += msg.msg;
 
 			let small = document.createElement("small");
@@ -125,7 +131,7 @@
 			chatView.scrollTop = chatView.scrollHeight;
 		});
 
-		socket.on("userjoin", function(msg) {
+		socket.on("userjoin", function (msg) {
 			let chatView = document.getElementsByClassName("mainChatView")[0];
 			let small = document.createElement("small");
 			small.className = "timestamp center";
@@ -138,17 +144,46 @@
 	</script>
 
 	<script>
-		if("serviceWorker" in navigator) {
-			window.addEventListener("load", function() {
+		if ("serviceWorker" in navigator) {
+			window.addEventListener("load", function () {
 				navigator.serviceWorker.register("/service-worker.js")
-					.then(function(reg) {
+					.then(function (reg) {
 						console.log("Service Worker Registered", reg);
 					})
-					.catch(function(err) {
+					.catch(function (err) {
 						console.error(err);
 					});
 			});
 		}
 	</script>
+
+	<script>
+		Notification.requestPermission(function (status) {
+			console.log('Notification permission status:', status);
+		});
+
+		function displayNotification(message) {
+			if (Notification.permission == 'granted') {
+				navigator.serviceWorker.getRegistration().then(function (reg) {
+					let options = {
+						body: message,
+						icon: 'assets/images/catter-128x128.png',
+						vibrate: [100, 50, 100],
+						data: {
+							dateOfArrival: Date.now(),
+							primaryKey: 1
+						}
+					};
+					reg.showNotification('Chatterbox', options);
+				});
+			}
+		}
+		
+
+		// displayNotification();
+	</script>
+
+	<!-- <script src="notification.js"></script> -->
 </body>
+
 </html>
